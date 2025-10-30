@@ -247,7 +247,6 @@ class DebugMode(TorchDispatchMode):
                 self.operators.append(_OpCall(func, args, kwargs, self.call_depth + 1))
 
         result = func(*args, **kwargs)
-
         return result
 
     def __enter__(self):
