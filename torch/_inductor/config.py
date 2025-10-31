@@ -957,7 +957,7 @@ quiesce_async_compile_pool: bool = Config(
 quiesce_async_compile_pool_v2: bool = Config(
     justknob="pytorch/inductor:quiesce_async_compile_pool_v2",
     env_name_force="TORCHINDUCTOR_QUIESCE_ASYNC_COMPILE_POOL",
-    default=False,
+    default=True,
 )
 
 quiesce_async_compile_time: int = Config(
