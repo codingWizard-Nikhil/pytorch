@@ -38,6 +38,7 @@ from .cuda_template import CUTLASSTemplate
 from .cutlass_python_evt import CutlassEVTCodegen, scaled_mm_evt
 from .cutlass_utils import (
 from .python_evt import CutlassEVTCodegen, scaled_mm_evt
+from .template import CUTLASSTemplate
 from .utils import (
     ACCUMULATOR_DTYPES,
     dtype_match,
