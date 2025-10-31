@@ -863,6 +863,11 @@ class {module_name}(torch.nn.Module):
             self.recompile()
         self._enrich_profiler_metadata = enable
 
+        # Recursively set for all submodules that are GraphModules
+        for submodule in self.modules():
+            if submodule is not self and isinstance(submodule, GraphModule):
+                submodule.enrich_profiler_metadata(enable)
+
     @compatibility(is_backward_compatible=True)
     def recompile(self) -> PythonCode:
         """
@@ -873,7 +878,9 @@ class {module_name}(torch.nn.Module):
         if isinstance(self._graph._codegen, _PyTreeCodeGen):
             self._in_spec = self._graph._codegen.pytree_info.in_spec
             self._out_spec = self._graph._codegen.pytree_info.out_spec
-        python_code = self._graph.python_code(root_module="self")
+        python_code = self._graph.python_code(
+            root_module="self", record_func=self._enrich_profiler_metadata
+        )
         self._code = python_code.src
         self._lineno_map = python_code._lineno_map
         self._prologue_start = python_code._prologue_start
@@ -896,7 +903,6 @@ class {module_name}(torch.nn.Module):
             # This ensures the same code+metadata always generates the same filename
             hash_value = _metadata_hash(self._code, node_metadata)
             file_stem = f"{FX_GRAPH_MODULE_FILE_PREFIX}_{hash_value}"
-
             filename = f"{file_stem}.py"
 
             # Only include co_filename to use it directly as the cache key
@@ -915,6 +921,12 @@ class {module_name}(torch.nn.Module):
             from torch.fx.traceback import register_fx_metadata
 
             register_fx_metadata(filename, metadata)
+
+            # Replace the placeholder in generated code with actual filename
+            self._code = self._code.replace(
+                "torch._C._profiler._RecordFunctionFast('## ENTER_GRAPH_PLACEHOLDER_KEY ##')",
+                f"torch._C._profiler._RecordFunctionFast('## {filename} ##')",
+            )
 
         cls.forward = _forward_from_src(self._code, python_code.globals, co_fields)
 
